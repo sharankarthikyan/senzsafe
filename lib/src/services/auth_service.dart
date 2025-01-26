@@ -70,6 +70,7 @@ class AuthService {
     await prefs.remove('userId');
     await prefs.remove('companyId');
     await prefs.remove('roleId');
+    await prefs.remove('dismissedAlertIds');
     final socketService = SocketService();
     socketService.disconnectAll();
   }
