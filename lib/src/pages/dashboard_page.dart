@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:senzsafe/src/services/local_notification_service.dart';
 import 'package:senzsafe/src/widgets/closeable_alert.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
@@ -22,6 +23,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   String dashboardEndpoint = '${ApiService.baseUrl}/dashboard';
   String abnormalSensorNotifierEndpoint = '${ApiService.baseUrl}/abnormal-sensor-notifier';
+  final LocalNotificationService _notificationService = LocalNotificationService();
   late Future<List<String>> branches;
   Map<String, dynamic> dashboardData = {};
   List<Marker> branchMarkers = [];
@@ -83,10 +85,10 @@ class _DashboardPageState extends State<DashboardPage> {
         if (dashboardData.containsKey('branchDetails') &&
             (dashboardData['branchDetails'] as List).isNotEmpty) {
           branchMarkers = (dashboardData['branchDetails'] as List).map((branch) {
-            return Marker(
+            return branch['latitude'] != null && branch!['longitude'] != null ? Marker(
               point: LatLng(
-                double.parse(branch['latitude']),
-                double.parse(branch['longitude']),
+                double.parse(branch!['latitude']),
+                double.parse(branch!['longitude']),
               ),
               builder: (context) => Tooltip(
                 message: branch['name'],
@@ -95,6 +97,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   size: 30,
                   color: Colors.red,
                 ),
+              ),
+            ) : Marker(
+              point: LatLng(0, 0), // Default point if latitude/longitude is null
+              builder: (context) => const Icon(
+                Icons.location_on,
+                size: 30,
+                color: Colors.red,
               ),
             );
           }).toList();
@@ -127,6 +136,8 @@ class _DashboardPageState extends State<DashboardPage> {
               .cast<Map<String, dynamic>>()
               .toList();
         });
+
+        _notificationService.showNotification("Notification", data['message']);
       }
     });
   }
